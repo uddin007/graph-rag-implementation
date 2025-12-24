@@ -6,28 +6,28 @@
 graph-rag-system/
 ├── graph_rag_core.py              # Core classes and base functionality
 ├── graph_rag_intelligence.py      # Query intelligence and SQL generation
-├── graph_rag_enhancements.py      # Enhancement functions and MLflow
+├── graph_rag_enhancements.py      # Enhancement functions
 ├── graph_rag_usage_notebook.py    # Main usage notebook
-└── README.md                       # This file
+└── README.md                      # This file
 ```
 
 ---
 
 ## 📦 Module Overview
 
-### 1. **graph_rag_core.py** - 500 lines
+### 1. **graph_rag_core.py** 
 
 **Core classes:** GraphRAGConfig, KnowledgeGraphBuilder, EmbeddingGenerator, SemanticSearchEngine, GraphTraversalEngine, AnswerGenerator, GraphRAGSystem
 
 **Purpose:** Base Graph RAG system with semantic search
 
-### 2. **graph_rag_intelligence.py** - 350 lines
+### 2. **graph_rag_intelligence.py** 
 
 **Core classes:** QueryIntentClassifier, SQLQueryBuilder, PatternQueryEngine
 
 **Purpose:** Query intelligence, SQL generation, pattern queries
 
-### 3. **graph_rag_enhancements.py** - 400 lines
+### 3. **graph_rag_enhancements.py** 
 
 **Core functions:** enhance_with_sql_queries, enhance_with_pattern_queries, enhance_with_all, save_graph_rag_model
 
@@ -35,7 +35,7 @@ graph-rag-system/
 
 ---
 
-## 🚀 Quick Start (5 Steps)
+## 🚀 Quick Start 
 
 ### 1. Upload modules to Databricks
 
@@ -45,7 +45,7 @@ from graph_rag_core import GraphRAGConfig, GraphRAGSystem
 from graph_rag_enhancements import enhance_with_all, save_graph_rag_model
 ```
 
-### 3. Configure (ONLY section to modify!)
+### 3. Configure 
 ```python
 config = GraphRAGConfig(
     catalog="accenture",
@@ -96,7 +96,7 @@ User Query → Intent Classifier → SQL/Graph/Semantic Engine → Answer
 
 ---
 
-## 🔧 Customization
+##  Customization
 
 **Add new dimension:** Just update `GraphRAGConfig` - everything else auto-configures!
 
@@ -104,7 +104,7 @@ User Query → Intent Classifier → SQL/Graph/Semantic Engine → Answer
 
 ---
 
-## 📈 Performance
+##  Performance
 
 | Query Type | Method | Time | Scales To |
 |------------|--------|------|-----------|
@@ -114,12 +114,11 @@ User Query → Intent Classifier → SQL/Graph/Semantic Engine → Answer
 
 ---
 
-## 🎉 Summary
+##  Summary
 
-✅ **3 modules** (~1,250 lines total)  
-✅ **5 query types** supported  
-✅ **5-line configuration** for any dataset  
-✅ **Production-ready** with MLflow  
-✅ **Modular** and extensible  
+**3 modules** 
+**5 query types** supported  
+**5-line configuration** for any dataset  
+**Production-ready** with MLflow  
+**Modular** and extensible  
 
-**Configuration is 5 lines. Everything else is automatic!**
