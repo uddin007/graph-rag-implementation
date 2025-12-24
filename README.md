@@ -1,6 +1,6 @@
 # Graph RAG System - Modular Architecture
 
-## 📁 File Structure
+##  File Structure
 
 ```
 graph-rag-system/
@@ -13,7 +13,7 @@ graph-rag-system/
 
 ---
 
-## 📦 Module Overview
+##  Module Overview
 
 ### 1. **graph_rag_core.py** 
 
@@ -35,7 +35,7 @@ graph-rag-system/
 
 ---
 
-## 🚀 Quick Start 
+##  Quick Start 
 
 ### 1. Upload modules to Databricks
 
@@ -78,7 +78,7 @@ rag_system.query('Customers who bought "Product A" and "Product B"')
 
 ---
 
-## 🎯 Supported Query Types
+##  Supported Query Types
 
 1. **Semantic Search** → "Show chocolate items"
 2. **SQL Aggregation** → "Top 10 customers by revenue"
@@ -88,7 +88,7 @@ rag_system.query('Customers who bought "Product A" and "Product B"')
 
 ---
 
-## 📊 Architecture
+##  Architecture
 
 ```
 User Query → Intent Classifier → SQL/Graph/Semantic Engine → Answer
