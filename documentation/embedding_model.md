@@ -66,15 +66,14 @@ Perfect for special occasions or as a gourmet gift.
 
 | Feature | all-MiniLM-L6-v2 | BAAI/bge-m3 | Difference |
 |---------|------------------|-------------|------------|
-| **Embedding Dimension** | 384 | **1024** | 2.7x larger |
-| **Model Parameters** | 22M | **568M** | 25x more parameters |
-| **Semantic Quality** | Good | **Excellent** | Better understanding |
-| **Multi-lingual** | Limited | **139 languages** | Much broader |
-| **Context Length** | 256 tokens | **8192 tokens** | 32x longer |
-| **Speed (CPU)** | Fast (1-2 sec) | Slower (5-10 sec) | 5x slower |
-| **Speed (GPU)** | Fast (0.2 sec) | Fast (0.5 sec) | Similar with GPU |
-| **Memory** | Low (200MB) | High (2.3GB) | 11x more RAM |
-| **Best For** | Speed, small graphs | **Quality, large graphs** | Better accuracy |
+| Embedding Dimension | 384 | 1024 | 2.7x larger |
+| Model Parameters | 22M | 568M | 25x more parameters |
+| Semantic Quality | Good | Excellent | Better understanding |
+| Multi-lingual | Limited | 139 languages | Much broader |
+| Context Length | 256 tokens | 8192 tokens | 32x longer |
+| Speed (CPU) | Fast (1-2 sec) | Slower (5-10 sec) | 5x slower |
+| Speed (GPU) | Fast (0.2 sec) | Fast (0.5 sec) | Similar with GPU |
+| Memory | Low (200MB) | High (2.3GB) | 11x more RAM |
 
 ### **BGE-M3 Specifications:**
 
