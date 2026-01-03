@@ -60,6 +60,89 @@ class GraphRAGConfig:
     max_hops: int = 2
     date_column: str = "sale_date"
     
+    # Embedding model presets
+    EMBEDDING_MODELS = {
+        # Fast, lightweight (default)
+        "mini": {
+            "name": "all-MiniLM-L6-v2",
+            "dimensions": 384,
+            "max_tokens": 256,
+            "description": "Fast, lightweight. Good for small-medium graphs (<100K nodes)",
+            "speed": "⚡⚡⚡",
+            "quality": "⭐⭐⭐"
+        },
+        # High quality, recommended for Graph RAG
+        "bge-m3": {
+            "name": "BAAI/bge-m3",
+            "dimensions": 1024,
+            "max_tokens": 8192,
+            "description": "High quality, multi-lingual. Best for Graph RAG applications",
+            "speed": "⚡",
+            "quality": "⭐⭐⭐⭐⭐"
+        },
+        # Balanced option
+        "bge-base": {
+            "name": "BAAI/bge-base-en-v1.5",
+            "dimensions": 768,
+            "max_tokens": 512,
+            "description": "Balanced speed and quality",
+            "speed": "⚡⚡",
+            "quality": "⭐⭐⭐⭐"
+        },
+        # Large, highest quality
+        "bge-large": {
+            "name": "BAAI/bge-large-en-v1.5",
+            "dimensions": 1024,
+            "max_tokens": 512,
+            "description": "Highest quality for English text",
+            "speed": "⚡",
+            "quality": "⭐⭐⭐⭐⭐"
+        },
+        # Alternative fast option
+        "e5-small": {
+            "name": "intfloat/e5-small-v2",
+            "dimensions": 384,
+            "max_tokens": 512,
+            "description": "Fast, good quality alternative to MiniLM",
+            "speed": "⚡⚡⚡",
+            "quality": "⭐⭐⭐"
+        }
+    }
+    
+    @classmethod
+    def list_models(cls):
+        """Print available embedding models"""
+        print("\n" + "="*80)
+        print("AVAILABLE EMBEDDING MODELS")
+        print("="*80)
+        
+        for key, info in cls.EMBEDDING_MODELS.items():
+            print(f"\n {key.upper()}: {info['name']}")
+            print(f"   Dimensions: {info['dimensions']}")
+            print(f"   Max Tokens: {info['max_tokens']}")
+            print(f"   Speed: {info['speed']} | Quality: {info['quality']}")
+            print(f"   {info['description']}")
+        
+        print("\n" + "="*80)
+        print("USAGE:")
+        print("="*80)
+        print('  config = GraphRAGConfig(..., embedding_model="bge-m3")')
+        print('  config = GraphRAGConfig(..., embedding_model="BAAI/bge-m3")')
+        print("\n")
+    
+    def __post_init__(self):
+        """Auto-resolve model name from preset or use custom"""
+        if self.embedding_model in self.EMBEDDING_MODELS:
+            # Use preset
+            preset = self.EMBEDDING_MODELS[self.embedding_model]
+            self.embedding_model = preset['name']
+            print(f" Using preset '{self.embedding_model}' model")
+            print(f"   Dimensions: {preset['dimensions']} | Max tokens: {preset['max_tokens']}")
+            print(f"   {preset['description']}")
+        else:
+            # Custom model name
+            print(f" Using custom model: {self.embedding_model}")
+    
     # Computed properties
     @property
     def full_fact_table(self) -> str:
@@ -456,7 +539,7 @@ class GraphRAGSystem:
         answer = self.answer_gen.format_semantic_results(results)
         
         if verbose:
-            print(f"\n Answer:")
+            print(f"\n💡 Answer:")
             print(answer)
             print(f"\n{'='*80}\n")
         

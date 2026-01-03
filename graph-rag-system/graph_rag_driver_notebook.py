@@ -2,7 +2,7 @@
 # MAGIC %md
 # MAGIC # Graph RAG System - Driver Notebook
 # MAGIC
-# MAGIC This notebook demonstrates how to use the modular Graph RAG system.
+# MAGIC This notebook runs the modular Graph RAG system.
 # MAGIC
 # MAGIC **Modules:**
 # MAGIC - `graph_rag_core.py` - Core classes and base functionality
@@ -41,22 +41,34 @@ print("Modules imported successfully")
 
 # MAGIC %md
 # MAGIC ## 2. Configuration
-# MAGIC
-# MAGIC **This is the ONLY section you need to modify for different datasets!**
+
+# COMMAND ----------
+
+# dbutils.widgets.dropdown('embedding_model',
+#     defaultValue="all-MiniLM-L6-v2",
+#     choices=[
+#         "all-MiniLM-L6-v2",
+#         "BAAI/bge-m3",
+#         "BAAI/bge-base-en-v1.5",
+#         "BAAI/bge-large-en-v1.5",
+#         "intfloat/e5-small-v2"
+#     ],
+#     label="embedding_model"
+# )
 
 # COMMAND ----------
 
 # ============================================================================
-# CONFIGURE FOR OUR DATASET
+# CONFIGURE DATASET
 # ============================================================================
 
 config = GraphRAGConfig(
-    # UPDATE THESE FOR YOUR DATA
-    catalog="accenture",              # Your Unity Catalog name
-    schema="sales_analysis",          # Your schema name
-    fact_table="items_sales",         # Your fact table
+    # UPDATE THESE FOR THE DATA
+    catalog=dbutils.widgets.get("tables_catalog"),
+    schema=dbutils.widgets.get("tables_schema"),      
+    fact_table="items_sales",         
     
-    dimension_tables=[                # Your dimension tables
+    dimension_tables=[                
         "item_details",
         "store_location",
         "customer_details"
@@ -64,15 +76,15 @@ config = GraphRAGConfig(
     
     # FOREIGN KEY MAPPINGS
     fk_mappings={
-        "items_sales": {              # Fact table name
-            "item_id": "item_details",         # FK → dimension
-            "location_id": "store_location",   # FK → dimension
-            "customer_id": "customer_details"  # FK → dimension
+        "items_sales": {              
+            "item_id": "item_details",         # FK → dimension table 
+            "location_id": "store_location",   # FK → dimension table 
+            "customer_id": "customer_details"  # FK → dimension table
         }
     },
     
     # Embedding model settings
-    embedding_model="all-MiniLM-L6-v2",  # Embedding model
+    embedding_model=dbutils.widgets.get("embedding_model"),
     top_k_nodes=5,                        # Top results to return
     max_hops=2,                           # Graph traversal depth
     date_column="sale_date"               # Date column in fact table
@@ -87,13 +99,12 @@ print("Configuration created for:", config.fact_table)
 
 # COMMAND ----------
 
-# Build the system
 rag_system = GraphRAGSystem(config, spark)
-rag_system.build()
+rag_system.build() # ← Embeddings created here
 
 # COMMAND ----------
 
-# Add all enhancements (SQL, Pattern queries, etc.)
+# Add enhancements (SQL, Pattern queries, etc.)
 enhance_with_all(rag_system)
 
 # COMMAND ----------
@@ -101,7 +112,15 @@ enhance_with_all(rag_system)
 # MAGIC %md
 # MAGIC ## 4. Test Queries
 # MAGIC
-# MAGIC Test all supported query types.
+# MAGIC Test all supported query types using denormalized view `agg_table`
+
+# COMMAND ----------
+
+tables_catalog = dbutils.widgets.get("tables_catalog")
+tables_schema = dbutils.widgets.get("tables_schema")
+agg_df = spark.table(f"{tables_catalog}.{tables_schema}.aggregated_sales")
+agg_df.display()
+agg_df.createOrReplaceTempView("agg_table")
 
 # COMMAND ----------
 
@@ -115,6 +134,26 @@ rag_system.query("Show me chocolate items")
 
 # COMMAND ----------
 
+# Test with keyworkd search
+chocolate_items_list = spark.sql("""
+SELECT DISTINCT item_name, item_description
+FROM agg_table
+WHERE LOWER(item_name) LIKE '%chocolate%' OR LOWER(item_description) LIKE '%chocolate%'
+""").collect()
+print(chocolate_items_list)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC **Note:** All semantic search items are captured within the keyword search. 
+
+# COMMAND ----------
+
+# Semantic search - to test embedding model
+rag_system.query("Show premium chocolate items with rich flavor")
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ### 4.2 SQL Aggregation Queries
 
@@ -125,8 +164,40 @@ rag_system.query("What are the top 5 items by revenue?")
 
 # COMMAND ----------
 
+top_items_df = spark.sql("""
+SELECT item_name, SUM(total_sales_value) AS total_revenue
+FROM agg_table
+GROUP BY item_name
+ORDER BY total_revenue DESC
+LIMIT 5
+""")
+print(top_items_df.collect())
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC **Note:** The RAG output matches with the SQL query
+
+# COMMAND ----------
+
 # Top customers by sales
-rag_system.query("Show me the top 10 customers by total sales")
+rag_system.query("Show me the top 3 customers by total sales")
+
+# COMMAND ----------
+
+top_customers_df = spark.sql("""
+SELECT customer_name, SUM(total_sales_value) AS total_sales
+FROM agg_table
+GROUP BY customer_name
+ORDER BY total_sales DESC
+LIMIT 3
+""")
+print(top_customers_df.collect())
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC **Note:** The RAG output matches with the SQL query
 
 # COMMAND ----------
 
@@ -140,6 +211,23 @@ rag_system.query("What are the top 5 items by revenue in December 2025?")
 
 # COMMAND ----------
 
+top_items_dec2025_df = spark.sql("""
+SELECT item_name, SUM(total_sales_value) AS total_revenue
+FROM agg_table
+WHERE sale_date >= '2025-12-01' AND sale_date <= '2025-12-31'
+GROUP BY item_name
+ORDER BY total_revenue DESC
+LIMIT 5
+""")
+print(top_items_dec2025_df.collect())
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC **Note:** The RAG output matches with the SQL query
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ### 4.4 Pattern/Relationship Queries
 
@@ -150,8 +238,31 @@ rag_system.query('Which customers bought "Cocoa Swirl"?')
 
 # COMMAND ----------
 
+customers_cocoa_swirl_df = spark.sql("""
+SELECT DISTINCT customer_name
+FROM agg_table
+WHERE item_name = 'Cocoa Swirl'
+ORDER BY customer_name
+""")
+display(customers_cocoa_swirl_df)
+
+# COMMAND ----------
+
 # Customers who bought both products
 rag_system.query('Which customers who bought "Cocoa Swirl" also bought "Berry Burst"?')
+
+# COMMAND ----------
+
+customers_both_df = spark.sql("""
+SELECT DISTINCT a.customer_name
+FROM agg_table a
+JOIN agg_table b
+  ON a.customer_name = b.customer_name
+WHERE a.item_name = 'Cocoa Swirl'
+  AND b.item_name = 'Berry Burst'
+ORDER BY a.customer_name
+""")
+display(customers_both_df)
 
 # COMMAND ----------
 
@@ -162,6 +273,18 @@ rag_system.query('Which customers who bought "Cocoa Swirl" also bought "Berry Bu
 
 # Customers who bought product in specific timeframe
 rag_system.query('Find customers who bought "Cocoa Swirl" in December 2025')
+
+# COMMAND ----------
+
+customers_cocoa_swirl_df = spark.sql("""
+SELECT DISTINCT customer_name
+FROM agg_table
+WHERE item_name = 'Cocoa Swirl'
+AND sale_date >= '2025-12-01' 
+AND sale_date <= '2025-12-31'
+ORDER BY customer_name
+""")
+display(customers_cocoa_swirl_df)
 
 # COMMAND ----------
 
@@ -179,42 +302,6 @@ print(f"   Total Edges: {stats['total_edges']:,}")
 print(f"   Embedding Dimension: {stats['embedding_dim']}")
 print(f"   Fact Table: {stats['fact_table']}")
 print(f"   Dimension Tables: {', '.join(stats['dimension_tables'])}")
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## 8. Batch Testing
-
-# COMMAND ----------
-
-# Test multiple queries
-test_queries = [
-    "Show me chocolate items",
-    "Top 10 customers by revenue",
-    "Top 5 items in December 2025",
-    'Which customers bought "Maple Munch"?',
-    "Bottom 5 items by sales"
-]
-
-print("="*80)
-print("BATCH TESTING - MULTIPLE QUERIES")
-print("="*80)
-
-for i, query in enumerate(test_queries, 1):
-    print(f"\n{'='*80}")
-    print(f"Test {i}/{len(test_queries)}")
-    print(f"{'='*80}")
-    
-    answer = rag_system.query(query, verbose=False)
-    
-    print(f"\n Query: {query}")
-    print(f"\n Answer:")
-    print(answer[:500])  # Show first 500 chars
-    print()
-
-print(f"\n{'='*80}")
-print(f" All {len(test_queries)} tests completed!")
-print(f"{'='*80}")
 
 # COMMAND ----------
 

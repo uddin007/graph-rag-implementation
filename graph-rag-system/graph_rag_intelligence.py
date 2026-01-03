@@ -84,7 +84,7 @@ class QueryIntentClassifier:
         
         Returns:
             Dict with: is_aggregation, measure, entity_type, limit, 
-                      is_bottom, date_filters
+                      is_bottom, date_filters, is_complex_sql
         """
         question_lower = question.lower()
         
@@ -92,6 +92,9 @@ class QueryIntentClassifier:
         is_aggregation = any(
             kw in question_lower for kw in self.AGGREGATION_KEYWORDS
         )
+        
+        # Detect complex SQL (needs LLM)
+        is_complex_sql = self._is_complex_sql_query(question_lower)
         
         # Extract measure
         measure = self._extract_measure(question_lower)
@@ -106,13 +109,84 @@ class QueryIntentClassifier:
         date_filters = self._extract_date_filters(question)
         
         return {
-            'is_aggregation': is_aggregation,
+            'is_aggregation': is_aggregation or is_complex_sql,  # Complex SQL counts as aggregation
+            'is_complex_sql': is_complex_sql,  # Flag for LLM fallback
             'measure': measure,
             'entity_type': entity_type,
             'limit': limit,
             'is_bottom': is_bottom,
             'date_filters': date_filters
         }
+    
+    def _is_complex_sql_query(self, question_lower: str) -> bool:
+        """Detect if query requires complex SQL (LLM fallback needed)
+        
+        Args:
+            question_lower: Question in lowercase
+            
+        Returns:
+            True if query is complex and needs LLM
+        """
+        
+        # Keywords that indicate complex SQL
+        complex_indicators = [
+            # Statistical operations
+            'average', 'mean', 'median', 'variance', 'std', 'deviation',
+            'above-average', 'below-average', 'above average', 'below average',
+            
+            # Comparative operations
+            'more than', 'less than', 'greater than', 'higher than', 'lower than',
+            'compared to', 'versus', 'vs',
+            
+            # Multiple conditions
+            'at least', 'at most', 'only', 'exclusively',
+            'all three', 'all locations', 'every location', 'each location',
+            
+            # Calculations
+            'percentage', 'percent', 'contribution', 'proportion',
+            'ratio', 'per unit', 'per customer', 'per item',
+            'growth', 'change', 'difference', 'variance',
+            
+            # Value/Ranking queries 
+            'high-value', 'low-value', 'valuable', 'most valuable',
+            'lifetime value', 'customer value', 'total value',
+            'best', 'worst', 'highest', 'lowest',
+            
+            # Calculation verbs 
+            'calculate', 'compute', 'determine', 'find out',
+            
+            # Time patterns
+            'month-over-month', 'year-over-year', 'trend', 'over time',
+            'between purchases', 'frequency', 'interval',
+            
+            # Co-occurrence
+            'together', 'along with', 'combination',
+            
+            # Complex filters
+            'such that', 'that are', 'that have',
+            'with the', 'having',
+            
+            # Income/demographic + value 
+            'high-income', 'low-income', 'wealthy', 'affluent',
+        ]
+        
+        # Additional check: If query contains both "customer" and value-related terms
+        # but no simple aggregation keywords like "top" or "bottom", it's likely complex
+        has_customer = 'customer' in question_lower or 'customers' in question_lower
+        has_value_intent = any(term in question_lower for term in [
+            'value', 'worth', 'valuable', 'spend', 'spent', 'spending',
+            'revenue', 'sales', 'purchase', 'bought'
+        ])
+        has_simple_aggregation = any(term in question_lower for term in [
+            'top ', 'bottom ', 'top 5', 'top 10', 'bottom 5', 'bottom 10'
+        ])
+        
+        # If it's about customer value but not a simple "top N" query, use LLM
+        if has_customer and has_value_intent and not has_simple_aggregation:
+            return True
+        
+        # Check if any complex indicator is present
+        return any(indicator in question_lower for indicator in complex_indicators)
     
     def _extract_measure(self, question_lower: str) -> Optional[str]:
         """Extract measure column from query"""
@@ -193,9 +267,21 @@ class QueryIntentClassifier:
 class SQLQueryBuilder:
     """Builds optimized SQL queries for aggregation"""
     
-    def __init__(self, config, spark):
+    def __init__(self, config, spark, use_llm_fallback: bool = True):
         self.config = config
         self.spark = spark
+        self.use_llm_fallback = use_llm_fallback
+        
+        # Initialize LLM generator if enabled
+        self.llm_generator = None
+        if use_llm_fallback:
+            try:
+                from llm_sql_generator import LLMSQLGenerator
+                self.llm_generator = LLMSQLGenerator(config, spark)
+                print(" LLM SQL fallback enabled (Claude Sonnet 4.5)")
+            except Exception as e:
+                print(f" LLM SQL fallback not available: {e}")
+                self.use_llm_fallback = False
     
     def build_aggregation_query(
         self,
@@ -267,9 +353,59 @@ class SQLQueryBuilder:
         
         return query
     
+    def build_complex_query(self, question: str, verbose: bool = True) -> Optional[str]:
+        """Build SQL for complex queries using LLM fallback
+        
+        This method is used when the rule-based system cannot handle
+        the query complexity.
+        
+        Args:
+            question: Natural language question
+            verbose: Print debug information
+            
+        Returns:
+            SQL query string, or None if generation failed
+        """
+        
+        if not self.use_llm_fallback or self.llm_generator is None:
+            if verbose:
+                print(" LLM fallback not available - cannot generate complex SQL")
+            return None
+        
+        if verbose:
+            print(f"\n Query is complex - using LLM fallback...")
+        
+        # Use LLM to generate SQL
+        sql = self.llm_generator.generate_sql(question, verbose)
+        
+        return sql
+    
     def execute_query(self, sql: str) -> pd.DataFrame:
         """Execute SQL and return pandas DataFrame"""
         return self.spark.sql(sql).toPandas()
+    
+    def can_handle_simple_aggregation(self, intent: Dict[str, Any]) -> bool:
+        """Check if this is a simple aggregation the rule-based system can handle
+        
+        Args:
+            intent: Intent classification result
+            
+        Returns:
+            True if rule-based system can handle it, False otherwise
+        """
+        
+        # If marked as complex SQL, cannot handle with rules
+        if intent.get('is_complex_sql', False):
+            return False
+        
+        # Rule-based system can handle if we have all required components
+        has_all_components = (
+            intent.get('is_aggregation') and
+            intent.get('measure') is not None and
+            intent.get('entity_type') is not None
+        )
+        
+        return has_all_components
     
     def _get_entity_info(self, entity_type: str) -> Optional[Dict[str, str]]:
         """Get ID and name columns for entity type"""
