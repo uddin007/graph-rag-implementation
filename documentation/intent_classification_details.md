@@ -136,7 +136,7 @@ Query: "Top 5 items by revenue"
 
 ## Summary of Query Routing
 
-| Query Type | Embeddings? | Graph Nodes? | SQL? | Why? |
+| Query Type | Embeddings | Graph Nodes | SQL | Use Case |
 |------------|-------------|--------------|------|------|
 | **"Show chocolate items"** | Yes | Yes | No | Semantic similarity |
 | **"Top 5 by revenue"** | No | No | Yes | Mathematical aggregation |
