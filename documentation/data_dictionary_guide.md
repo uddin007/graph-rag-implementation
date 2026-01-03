@@ -17,7 +17,7 @@ LLM thinks:
 Generated SQL:
   SELECT * FROM customer_details WHERE customer_zip_code = '90210'
   
-Result: WRONG! Returns customers in zip code 90210, not high-value customers
+Result: Returns customers in zip code 90210, not high-value customers
 ```
 
 ### **The Solution With Data Dictionary:**
@@ -44,7 +44,7 @@ Generated SQL:
   GROUP BY c.customer_id, c.customer_name
   ORDER BY total_value DESC
   
-Result: CORRECT! Returns customers sorted by actual purchase value
+Result: Returns customers sorted by actual purchase value
 ```
 
 ---
