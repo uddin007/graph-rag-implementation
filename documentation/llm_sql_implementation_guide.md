@@ -1,12 +1,10 @@
-# LL SQL generation system
+# LLM SQL generation system
 
 An intelligent SQL generation system that automatically:
 1. Uses rule-based SQL for simple queries (fast, <1 sec)
 2. Falls back to LLM (Claude Sonnet 4.5) for complex queries (smart, 3-5 sec)
 
 ---
-
-## 🚀 Quick Start
 
 ### **Enable (Default):**
 
@@ -18,7 +16,7 @@ rag_system.build()
 # Enable all enhancements (LLM fallback ON by default)
 enhance_with_all(rag_system)
 
-# Now supports complex queries!
+# Supports complex queries
 rag_system.query("Items with above-average revenue per unit")
 ```
 
@@ -30,36 +28,18 @@ from graph_rag_enhancements import enhance_with_sql_queries
 
 enhance_with_sql_queries(rag_system, use_llm_fallback=False)
 
-# Only rule-based SQL now
+# Only rule-based SQL
 ```
 
 ---
 
-## 📊 How It Works
-
 ### **Decision Flow:**
 
-```
-User Query
-    ↓
-Is it SQL-related?
-    ↓
-┌─────────┴─────────┐
-│  YES              │  NO
-↓                   ↓
-Can rule-based      Semantic
-handle it?          Search
-    ↓
-┌───┴────┐
-│ YES    │ NO
-↓        ↓
-Rule     LLM
-SQL      Fallback
-```
+<img width="1024" height="1024" alt="Gemini_Generated_Image_8juxo28juxo28jux" src="https://github.com/user-attachments/assets/59346a95-d2fe-43e0-9b06-d91f7a5b118c" />
 
 ### **Example Routing:**
 
-| Query | Method | Why? |
+| Query | Method | Use case |
 |-------|--------|------|
 | "Top 5 items by revenue" | Rule-based | Simple aggregation  |
 | "Items above average revenue/unit" | LLM | Needs subquery  |
