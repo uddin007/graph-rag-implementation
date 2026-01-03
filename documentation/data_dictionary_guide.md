@@ -49,7 +49,7 @@ Result: Returns customers sorted by actual purchase value
 
 ---
 
-**Biggest win:** Business logic understanding.
+**Benefit:** Business logic understanding.
 
 ---
 
@@ -66,7 +66,6 @@ Result: Returns customers sorted by actual purchase value
 }
 ```
 
-**Why this matters:**
 - LLM understands table granularity
 - Knows update frequency
 - Understands purpose
@@ -81,13 +80,11 @@ Result: Returns customers sorted by actual purchase value
     'column_type': 'double',
     'column_description': 'Total revenue in USD. PRIMARY MEASURE for revenue analysis.',
     'is_key': False,
-    'is_measure': True,  # ← Tells LLM this is for aggregations
+    'is_measure': True,  # Tells LLM this is for aggregations
     'business_rules': 'Must be positive. Calculated as units × price. Excludes taxes.',
     'sample_values': '25.99, 47.50, 123.45'
 }
 ```
-
-**Why this matters:**
 - LLM knows this is THE revenue measure
 - Understands calculation method
 - Has examples for validation
@@ -100,12 +97,10 @@ Result: Returns customers sorted by actual purchase value
 {
     'column_name': 'customer_id',
     'is_key': True,
-    'related_table': 'customer_details',  # ← FK relationship
+    'related_table': 'customer_details',  # FK relationship
     'column_description': 'Foreign key to customer_details. Identifies customer.',
 }
 ```
-
-**Why this matters:**
 - LLM generates correct JOINs automatically
 - Understands data lineage
 - Avoids orphaned records
@@ -122,15 +117,13 @@ Result: Returns customers sorted by actual purchase value
     """
 }
 ```
-
-**Why this matters:**
 - Prevents common mistakes
 - Enforces business definitions
 - Maintains consistency
 
 ---
 
-## **How to Implement**
+## Implementation**
 
 ### **Step 1: Create Data Dictionary**
 
@@ -173,7 +166,7 @@ enhance_with_all(rag_system)
 
 ```python
 data_dict = [
-    # ========== TABLE LEVEL ==========
+    # TABLE LEVEL 
     {
         'catalog': 'your_catalog',
         'schema': 'your_schema',
@@ -184,7 +177,7 @@ data_dict = [
         'business_rules': 'YOUR RULES: Grain, update frequency, etc.'
     },
     
-    # ========== COLUMN LEVEL ==========
+    # COLUMN LEVEL 
     {
         'catalog': 'your_catalog',
         'schema': 'your_schema',
@@ -205,7 +198,7 @@ data_dict = [
 
 ---
 
-##  **What to Emphasize in Descriptions**
+##  **Emphasize in Descriptions**
 
 ### **For Measures (Aggregations):**
 
@@ -213,11 +206,11 @@ data_dict = [
 #  GOOD:
 column_description = "Total revenue in USD. PRIMARY MEASURE for sales analysis."
 
-#  BAD:
+#  NOT GOOD:
 column_description = "Sales value"
 ```
 
-**Why:** LLM needs to know THIS is the main revenue measure.
+- LLM needs to know THIS is the main revenue measure.
 
 ---
 
@@ -227,11 +220,11 @@ column_description = "Sales value"
 #  GOOD:
 column_description = "Foreign key to customer_details. Identifies purchasing customer."
 
-#  BAD:
+#  NOT GOOD:
 column_description = "Customer ID"
 ```
 
-**Why:** LLM needs to know the relationship.
+- LLM needs to know the relationship.
 
 ---
 
@@ -241,11 +234,11 @@ column_description = "Customer ID"
 #  GOOD:
 column_description = "ZIP code for demographic analysis. NOT for customer value calculation."
 
-#  BAD:
+#  NOT GOOD:
 column_description = "ZIP code"
 ```
 
-**Why:** Prevents misuse (e.g., using zip code as wealth proxy).
+- Prevents misuse (e.g., using zip code as wealth proxy).
 
 ---
 
