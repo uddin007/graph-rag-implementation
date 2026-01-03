@@ -1,4 +1,4 @@
-## 🔍 **Intent Classification Details**
+## **Intent Classification Details**
 
 ### **Query Flow for "Top 5 items by revenue"**
 
@@ -187,7 +187,7 @@ self.graph.nodes = {
 ```
 ---
 
-## 🔍 **Trace a Aggregation Query**
+## **Trace a Aggregation Query**
 
 ```python
 query = "What are the top 5 items by revenue?"
