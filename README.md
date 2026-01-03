@@ -177,3 +177,5 @@ config = GraphRAGConfig(
 
 ---
 
+**NOTE:** Additional details are included in the documentation section.
+
