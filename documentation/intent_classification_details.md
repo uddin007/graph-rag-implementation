@@ -138,11 +138,11 @@ Query: "Top 5 items by revenue"
 
 | Query Type | Embeddings | Graph Nodes | SQL | Use Case |
 |------------|-------------|--------------|------|------|
-| **"Show chocolate items"** | Yes | Yes | No | Semantic similarity |
-| **"Top 5 by revenue"** | No | No | Yes | Mathematical aggregation |
-| **"Top 5 in December"** | No | No | Yes | Aggregation + time filter |
-| **"Customers who bought A"** | No | Yes | No | Graph traversal |
-| **"Customers who bought A in Dec"** | No | No | Yes | SQL with joins faster |
+| "Show chocolate items" | Yes | Yes | No | Semantic similarity |
+| "Top 5 by revenue" | No | No | Yes | Mathematical aggregation |
+| "Top 5 in December" | No | No | Yes | Aggregation + time filter |
+| "Customers who bought A" | No | Yes | No | Graph traversal |
+| "Customers who bought A in Dec" | No | No | Yes | SQL with joins faster |
 
 ---
 
